@@ -41,9 +41,6 @@ local lsp = require('lsp-zero').preset({
   suggest_lsp_servers = false,
 })
 
-require 'lspconfig'.jedi.setup {
-}
-
 -- (Optional) Configure lua language server for neovim
 -- lsp.nvim_workspace()
 
@@ -69,6 +66,7 @@ if not ok then
   return
 end
 
+-- if vim.g.vscode then
 if vim.g.vscode then
   -- VSCode extension
   map("n", "<Leader>c", ":call VSCodeNotify('editor.action.commentLine')<CR>", { silent = true })

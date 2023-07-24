@@ -210,7 +210,8 @@ require('lazy').setup({
   { 'xiyaowong/nvim-transparent' },
   { 'nvim-tree/nvim-tree.lua' },
   { 'nvim-tree/nvim-web-devicons' },
-  { 'ThePrimeagen/harpoon' }
+  { 'ThePrimeagen/harpoon' },
+  { 'jiangmiao/auto-pairs' }
 }, {})
 
 -- [[ Setting options ]]
@@ -269,6 +270,9 @@ vim.o.splitbelow = true
 
 vim.o.cursorline = true
 vim.o.guicursor = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,a:blinkwait500-blinkoff50-blinkon50'
+vim.o.colorcolumn = "100"
+
+vim.g.AutoPairsMultilineClose = 0
 
 -- [[ Basic Keymaps ]]
 
@@ -283,33 +287,33 @@ vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = tr
 
 vim.keymap.set('n', '<C-d>', "<C-d>zz", { silent = true })
 vim.keymap.set('n', '<C-u>', "<C-u>zz", { silent = true })
-vim.keymap.set('n', '<Leader>ss', ":w<CR>", { silent = true, desc = 'Save file' })
+vim.keymap.set('n', '<Leader>ss', ":wa<CR>", { silent = true, desc = 'Save all buffers' })
 
 vim.keymap.set('n', '<Leader>ot', ":NvimTreeToggle<CR>", { silent = true, desc = 'Toggle file tree' })
 
 vim.keymap.set('n', '<Leader>ha', require('harpoon.mark').add_file, { silent = true, desc = 'Harpoon add file' })
 vim.keymap.set('n', '<Leader>hh', require('harpoon.ui').toggle_quick_menu,
   { silent = true, desc = 'Harpoon toggle quick menu' })
-vim.keymap.set('n', '<C-1>', function() require('harpoon.ui').nav_file(1) end,
+vim.keymap.set('n', '<Leader>1', function() require('harpoon.ui').nav_file(1) end,
   { silent = true, desc = 'Harpoon go to file 1' })
-vim.keymap.set('n', '<C-2>', function() require('harpoon.ui').nav_file(2) end,
+vim.keymap.set('n', '<Leader>2', function() require('harpoon.ui').nav_file(2) end,
   { silent = true, desc = 'Harpoon go to file 2' })
-vim.keymap.set('n', '<C-3>', function() require('harpoon.ui').nav_file(3) end,
+vim.keymap.set('n', '<Leader>3', function() require('harpoon.ui').nav_file(3) end,
   { silent = true, desc = 'Harpoon go to file 3' })
-vim.keymap.set('n', '<C-4>', function() require('harpoon.ui').nav_file(4) end,
+vim.keymap.set('n', '<Leader>4', function() require('harpoon.ui').nav_file(4) end,
   { silent = true, desc = 'Harpoon go to file 4' })
 
-vim.keymap.set("x", "<leader>p", [["_dP]], { desc = 'Paste without overwriting register' })
+vim.keymap.set("x", "<leader>p", [["_dp]], { desc = 'Paste without overwriting register' })
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = 'Yank selection to OS clipboard' })
 vim.keymap.set("n", "<leader>Y", [["+Y]], { desc = 'Yank to EOL to OS clipboard' })
 vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]], { desc = 'Delete to null register' })
 
 vim.keymap.set('n', '<Leader>f', vim.lsp.buf.format, { desc = 'Format current buffer' })
 
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
-vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
+vim.keymap.set("v", "<C-j>", ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
+vim.keymap.set("v", "<C-k>", ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
 vim.keymap.set("n", "<C-j>", ":m .+1<CR>==", { desc = 'Move line down' })
-vim.keymap.set("n", "<C-j>", ":m .-2<CR>==", { desc = 'Move line up' })
+vim.keymap.set("n", "<C-k>", ":m .-2<CR>==", { desc = 'Move line up' })
 
 vim.keymap.set("n", "J", "mzJ`z")
 vim.keymap.set("n", "n", "nzzzv")
@@ -361,6 +365,7 @@ vim.keymap.set('n', '<leader>sg', require('telescope.builtin').live_grep, { desc
 vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { desc = '[S]earch [D]iagnostics' })
 vim.keymap.set('n', '<leader>sc', require('telescope.builtin').commands, { desc = '[S]earch [C]ommands' })
 vim.keymap.set('n', '<leader>sk', require('telescope.builtin').keymaps, { desc = '[S]earch [K]eymaps' })
+vim.keymap.set('n', '<leader>st', require('telescope.builtin').lsp_document_symbols, { desc = '[S]earch [K]eymaps' })
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`

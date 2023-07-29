@@ -211,7 +211,16 @@ require('lazy').setup({
   { 'nvim-tree/nvim-tree.lua' },
   { 'nvim-tree/nvim-web-devicons' },
   { 'ThePrimeagen/harpoon' },
-  { 'jiangmiao/auto-pairs' }
+  { 'jiangmiao/auto-pairs' },
+  {
+    "kdheepak/lazygit.nvim",
+    -- optional for floating window border decoration
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+    },
+  },
+  { 'tpope/vim-surround' },
+  { 'tpope/vim-repeat' },
 }, {})
 
 -- [[ Setting options ]]
@@ -219,7 +228,7 @@ require('lazy').setup({
 -- NOTE: You can change these options as you wish!
 
 -- Set highlight on search
-vim.o.hlsearch = false
+vim.o.hlsearch = true
 
 -- Make line numbers default
 vim.wo.number = true
@@ -332,15 +341,38 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 -- [[ Configure Telescope ]]
 -- See `:help telescope` and `:help telescope.setup()`
+--
+-- local telescopeConfig = require("telescope.config")
+-- -- Clone the default Telescope configuration
+-- local vimgrep_arguments = { unpack(telescopeConfig.values.vimgrep_arguments) }
+--
+-- -- I want to search in hidden/dot files.
+-- table.insert(vimgrep_arguments, "--hidden")
+-- -- I don't want to search in the `.git` directory.
+-- table.insert(vimgrep_arguments, "--glob")
+-- table.insert(vimgrep_arguments, "!**/.git/*")
+
+local actions = require("telescope.actions")
+local actions_layout = require("telescope.actions.layout")
 require('telescope').setup {
   defaults = {
+    -- vimgrep_arguments = vimgrep_arguments,
+    layout_strategy = 'vertical',
     mappings = {
       i = {
+        ['<esc>'] = actions.close,
         ['<C-u>'] = false,
         ['<C-d>'] = false,
+        ["<C-S-p>"] = actions_layout.toggle_preview
       },
     },
   },
+  -- pickers = {
+  --   find_files = {
+  --     -- `hidden = true` will still show the inside of `.git/` as it's not `.gitignore`d.
+  --     find_command = { "rg", "--files", "--hidden", "--glob", "!**/.git/*" },
+  --   },
+  -- },
 }
 
 -- Enable telescope fzf native, if installed
@@ -366,6 +398,26 @@ vim.keymap.set('n', '<leader>sd', require('telescope.builtin').diagnostics, { de
 vim.keymap.set('n', '<leader>sc', require('telescope.builtin').commands, { desc = '[S]earch [C]ommands' })
 vim.keymap.set('n', '<leader>sk', require('telescope.builtin').keymaps, { desc = '[S]earch [K]eymaps' })
 vim.keymap.set('n', '<leader>st', require('telescope.builtin').lsp_document_symbols, { desc = '[S]earch [K]eymaps' })
+
+local telescopeConfig = require("telescope.config")
+-- Clone the default Telescope configuration
+local vimgrep_arguments = { unpack(telescopeConfig.values.vimgrep_arguments) }
+
+-- I want to search in hidden/dot files.
+table.insert(vimgrep_arguments, "--hidden")
+-- I don't want to search in the `.git` directory.
+table.insert(vimgrep_arguments, "--glob")
+table.insert(vimgrep_arguments, "!**/.git/*")
+vim.keymap.set('n', '<leader>s.f', function()
+  require('telescope.builtin').find_files({
+    vimgrep_arguments = vimgrep_arguments,
+  })
+end, { desc = '[S]earch [F]iles (incl. hidden)' })
+vim.keymap.set('n', '<leader>s.g', function()
+  require('telescope.builtin').live_grep({
+    find_command = { "rg", "--files", "--hidden", "--glob", "!**/.git/*" },
+  })
+end, { desc = '[S]earch by [G]rep (incl. hidden)' })
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`

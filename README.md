@@ -147,3 +147,11 @@ This requires:
 {'nvim-telescope/telescope-fzf-native.nvim', build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build' }
 ```
 
+# My Stuff
+
+## Telescope
+
+[https://github.com/nvim-telescope/telescope.nvim#default-mappings](Default mappings)
+
+## LazyGit
+[https://github.com/jesseduffield/lazygit/blob/master/docs/keybindings/Keybindings_en.md](Keybindings)

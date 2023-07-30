@@ -221,7 +221,8 @@ require('lazy').setup({
   },
   { 'tpope/vim-surround' },
   { 'tpope/vim-repeat' },
-  { 'nvim-treesitter/nvim-treesitter-context' }
+  { 'nvim-treesitter/nvim-treesitter-context' },
+  { 'nvim-treesitter/nvim-treesitter-refactor' }
 }, {})
 
 -- [[ Setting options ]]
@@ -484,6 +485,13 @@ require('nvim-treesitter.configs').setup {
       },
     },
   },
+  refactor = {
+    highlight_definitions = {
+      enable = true,
+      -- Set to false if you have an `updatetime` of ~100.
+      clear_on_cursor_move = true,
+    },
+  },
 }
 
 -- treesitter context appearance
@@ -491,6 +499,7 @@ vim.cmd.highlight('TreesitterContextBottom gui=underline guisp=Grey')
 
 -- Autocomplete command line setup
 local cmp = require('cmp')
+
 cmp.setup.cmdline(':', {
   mapping = cmp.mapping.preset.cmdline(),
   sources = cmp.config.sources({

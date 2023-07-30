@@ -221,6 +221,7 @@ require('lazy').setup({
   },
   { 'tpope/vim-surround' },
   { 'tpope/vim-repeat' },
+  { 'nvim-treesitter/nvim-treesitter-context' }
 }, {})
 
 -- [[ Setting options ]]
@@ -484,6 +485,9 @@ require('nvim-treesitter.configs').setup {
     },
   },
 }
+
+-- treesitter context appearance
+vim.cmd.highlight('TreesitterContextBottom gui=underline guisp=Grey')
 
 -- Autocomplete command line setup
 local cmp = require('cmp')

@@ -208,10 +208,20 @@ require('lazy').setup({
   --    For additional information see: https://github.com/folke/lazy.nvim#-structuring-your-plugins
   -- { import = 'custom.plugins' },
   { 'xiyaowong/nvim-transparent' },
-  { 'nvim-tree/nvim-tree.lua' },
-  { 'nvim-tree/nvim-web-devicons' },
+  -- { 'nvim-tree/nvim-tree.lua' },
+  -- { 'nvim-tree/nvim-web-devicons' },
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    branch = "v3.x",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+      "MunifTanjim/nui.nvim",
+    }
+  },
   { 'ThePrimeagen/harpoon' },
-  { 'jiangmiao/auto-pairs' },
+  -- { 'jiangmiao/auto-pairs' },
+  { 'echasnovski/mini.pairs' },
   {
     "kdheepak/lazygit.nvim",
     -- optional for floating window border decoration
@@ -219,10 +229,28 @@ require('lazy').setup({
       "nvim-lua/plenary.nvim",
     },
   },
-  { 'tpope/vim-surround' },
+  -- { 'tpope/vim-surround' },
+  { 'echasnovski/mini.surround' },
   { 'tpope/vim-repeat' },
   { 'nvim-treesitter/nvim-treesitter-context' },
-  { 'nvim-treesitter/nvim-treesitter-refactor' }
+  { 'nvim-treesitter/nvim-treesitter-refactor' },
+  { 'godlygeek/tabular' },
+  { 'jose-elias-alvarez/typescript.nvim' },
+  {
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    opts = {
+      -- add any options here
+    },
+    dependencies = {
+      -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
+      "MunifTanjim/nui.nvim",
+      -- OPTIONAL:
+      --   `nvim-notify` is only needed, if you want to use the notification view.
+      --   If not available, we use `mini` as the fallback
+      "rcarriga/nvim-notify",
+    }
+  }
 }, {})
 
 -- [[ Setting options ]]
@@ -300,7 +328,7 @@ vim.keymap.set('n', '<C-d>', "<C-d>zz", { silent = true })
 vim.keymap.set('n', '<C-u>', "<C-u>zz", { silent = true })
 vim.keymap.set('n', '<Leader>ss', ":wa<CR>", { silent = true, desc = 'Save all buffers' })
 
-vim.keymap.set('n', '<Leader>ot', ":NvimTreeToggle<CR>", { silent = true, desc = 'Toggle file tree' })
+vim.keymap.set('n', '<Leader>ot', ":Neotree<CR>", { silent = true, desc = 'Toggle file tree' })
 
 vim.keymap.set('n', '<Leader>ha', require('harpoon.mark').add_file, { silent = true, desc = 'Harpoon add file' })
 vim.keymap.set('n', '<Leader>hh', require('harpoon.ui').toggle_quick_menu,
@@ -321,14 +349,31 @@ vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]], { desc = 'Delete to null regi
 
 vim.keymap.set('n', '<Leader>f', vim.lsp.buf.format, { desc = 'Format current buffer' })
 
-vim.keymap.set("v", "<C-j>", ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
-vim.keymap.set("v", "<C-k>", ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
-vim.keymap.set("n", "<C-j>", ":m .+1<CR>==", { desc = 'Move line down' })
-vim.keymap.set("n", "<C-k>", ":m .-2<CR>==", { desc = 'Move line up' })
+vim.keymap.set("v", "<Leader>j", ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
+vim.keymap.set("v", "<Leader>k", ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
+vim.keymap.set("n", "<Leader>j", ":m .+1<CR>==", { desc = 'Move line down' })
+vim.keymap.set("n", "<Leader>k", ":m .-2<CR>==", { desc = 'Move line up' })
 
 vim.keymap.set("n", "J", "mzJ`z")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
+
+vim.keymap.set("n", "<C-k>", "<cmd>cnext<CR>zz")
+vim.keymap.set("n", "<C-j>", "<cmd>cprev<CR>zz")
+-- vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz")
+-- vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
+
+vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
+
+vim.keymap.set("n", "<Leader>vs", [[:s#\(\%(\<\l\+\)\%(_\)\@=\)\|_\(\l\)#\u\1\2#g<CR>]],
+  { desc = 'Camel case to snake case(line)' })
+vim.keymap.set("n", "<Leader>vc", [[:s#\C\(\<\u[a-z0-9]\+\|[a-z0-9]\+\)\(\u\)#\l\1_\l\2#g<CR>]],
+  { desc = 'Snake case to camel case(line)' })
+vim.keymap.set("v", "<Leader>vs", [[:s#\%V\C\(\<\u[a-z0-9]\+\|[a-z0-9]\+\)\(\u\)\%V#\l\1_\l\2#g<CR>]],
+  { desc = 'Camel case to snake case(selection)' })
+vim.keymap.set("v", "<Leader>vc", [[:s#\%V\(\%(\<\l\+\)\%(_\)\@=\)\|_\(\l\)\%V#\u\1\2#g<CR>]],
+  { desc = 'Snake case to camel case(selection)' })
+
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
@@ -339,6 +384,41 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
   group = highlight_group,
   pattern = '*',
+})
+
+require('mini.pairs').setup()
+require('mini.surround').setup({
+  mappings = {
+    add = 'Sa',
+    delete = 'Sd',
+    find = 'Sf',
+    find_left = 'SF',      -- Find surrounding (to the left)
+    highlight = 'Sh',      -- Highlight surrounding
+    replace = 'Sr',        -- Replace surrounding
+    update_n_lines = 'Sn', -- Update `n_lines`
+
+    suffix_last = 'l',     -- Suffix to search with "prev" method
+    suffix_next = 'n',     -- Suffix to search with "next" method
+  }
+})
+
+require("noice").setup({
+  lsp = {
+    -- override markdown rendering so that **cmp** and other plugins use **Treesitter**
+    override = {
+      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+      ["vim.lsp.util.stylize_markdown"] = true,
+      ["cmp.entry.get_documentation"] = true,
+    },
+  },
+  -- you can enable a preset for easier configuration
+  presets = {
+    bottom_search = false, -- use a classic bottom cmdline for search
+    command_palette = true, -- position the cmdline and popupmenu together
+    long_message_to_split = true, -- long messages will be sent to a split
+    inc_rename = false, -- enables an input dialog for inc-rename.nvim
+    lsp_doc_border = false, -- add a border to hover docs and signature help
+  },
 })
 
 -- [[ Configure Telescope ]]
@@ -420,6 +500,16 @@ vim.keymap.set('n', '<leader>s.g', function()
     find_command = { "rg", "--files", "--hidden", "--glob", "!**/.git/*" },
   })
 end, { desc = '[S]earch by [G]rep (incl. hidden)' })
+
+require("neo-tree").setup({
+  close_if_last_window = false, -- Close Neo-tree if it is the last window left in the tabs
+  filesystem = {
+    follow_current_file = {
+      enabled = true,          -- This will find and focus the file in the active buffer every time
+      leave_dirs_open = false, -- `false` closes auto expanded dirs, such as with `:Neotree reveal`
+    },
+  }
+})
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
@@ -514,12 +604,13 @@ cmp.setup.cmdline(':', {
   })
 })
 
-require('nvim-tree').setup()
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous diagnostic message' })
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
+
+require('typescript').setup({})
 
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
@@ -584,6 +675,7 @@ local servers = {
     },
   },
 }
+
 
 -- Setup neovim lua configuration
 require('neodev').setup()

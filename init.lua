@@ -258,6 +258,21 @@ require('lazy').setup({
       --   If not available, we use `mini` as the fallback
       "rcarriga/nvim-notify",
     }
+  },
+  { 'ThePrimeagen/git-worktree.nvim' },
+  {
+    'jose-elias-alvarez/null-ls.nvim',
+    config = function()
+      local null_ls = require("null-ls")
+      null_ls.setup({
+        sources = {
+          null_ls.builtins.formatting.black
+        }
+      })
+    end,
+    dependencies = {
+      "nvim-lua/plenary.nvim"
+    }
   }
 }, {})
 
@@ -357,10 +372,10 @@ vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]], { desc = 'Delete to null regi
 
 vim.keymap.set('n', '<Leader>f', vim.lsp.buf.format, { desc = 'Format current buffer' })
 
-vim.keymap.set("v", "<Leader>j", ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
-vim.keymap.set("v", "<Leader>k", ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
-vim.keymap.set("n", "<Leader>j", ":m .+1<CR>==", { desc = 'Move line down' })
-vim.keymap.set("n", "<Leader>k", ":m .-2<CR>==", { desc = 'Move line up' })
+vim.keymap.set("v", "<A-j>", ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
+vim.keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
+vim.keymap.set("n", "<A-j>", ":m .+1<CR>==", { desc = 'Move line down' })
+vim.keymap.set("n", "<A-k>", ":m .-2<CR>==", { desc = 'Move line up' })
 
 vim.keymap.set("n", "J", "mzJ`z")
 vim.keymap.set("n", "n", "nzzzv")
@@ -383,6 +398,11 @@ vim.keymap.set("v", "<Leader>vc", [[:s#\%V\(\%(\<\l\+\)\%(_\)\@=\)\|_\(\l\)\%V#\
   { desc = 'Snake case to camel case(selection)' })
 
 vim.keymap.set('n', '<leader>gg', ":LazyGit<CR>", { desc = 'LazyGit' })
+
+vim.keymap.set('n', '<Leader>gww', function() require('telescope').extensions.git_worktree.git_worktrees() end,
+  { silent = true, desc = 'Open git worktrees' })
+vim.keymap.set('n', '<Leader>gwc', function() require('telescope').extensions.git_worktree.create_git_worktree() end,
+  { silent = true, desc = 'Create git worktree' })
 
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`

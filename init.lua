@@ -273,7 +273,8 @@ require('lazy').setup({
     dependencies = {
       "nvim-lua/plenary.nvim"
     }
-  }
+  },
+  {'kevinhwang91/nvim-bqf'}
 }, {})
 
 -- [[ Setting options ]]

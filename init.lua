@@ -168,10 +168,6 @@ require('lazy').setup({
     'lukas-reineke/indent-blankline.nvim',
     -- Enable `lukas-reineke/indent-blankline.nvim`
     -- See `:help indent_blankline.txt`
-    opts = {
-      char = '┊',
-      show_trailing_blankline_indent = false,
-    },
   },
 
   -- "gc" to comment visual regions/lines
@@ -274,7 +270,7 @@ require('lazy').setup({
       "nvim-lua/plenary.nvim"
     }
   },
-  {'kevinhwang91/nvim-bqf'}
+  { 'kevinhwang91/nvim-bqf' }
 }, {})
 
 -- [[ Setting options ]]
@@ -414,6 +410,11 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
   group = highlight_group,
   pattern = '*',
+})
+
+require('ibl').setup({
+  char = '┊',
+  show_trailing_blankline_indent = false,
 })
 
 require('mini.pairs').setup()

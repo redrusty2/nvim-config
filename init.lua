@@ -262,7 +262,8 @@ require('lazy').setup({
       local null_ls = require("null-ls")
       null_ls.setup({
         sources = {
-          null_ls.builtins.formatting.black
+          null_ls.builtins.formatting.black,
+          null_ls.builtins.formatting.prettier
         }
       })
     end,
@@ -270,7 +271,11 @@ require('lazy').setup({
       "nvim-lua/plenary.nvim"
     }
   },
-  { 'kevinhwang91/nvim-bqf' }
+  { 'kevinhwang91/nvim-bqf' },
+  {
+    "iamcco/markdown-preview.nvim",
+    build = function() vim.fn["mkdp#util#install"]() end,
+  }
 }, {})
 
 -- [[ Setting options ]]

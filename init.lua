@@ -170,7 +170,7 @@ require('lazy').setup({
     -- See `:help indent_blankline.txt`
     main = "ibl",
     opts = {
-       indent = { char = "┊" },
+      indent = { char = "┊" },
     }
   },
 
@@ -267,7 +267,8 @@ require('lazy').setup({
       null_ls.setup({
         sources = {
           null_ls.builtins.formatting.black,
-          null_ls.builtins.formatting.prettier
+          null_ls.builtins.formatting.prettier,
+          null_ls.builtins.code_actions.eslint
         }
       })
     end,
@@ -288,6 +289,17 @@ require('lazy').setup({
   },
   { "github/copilot.vim" }
 }, {})
+
+local lsp_formatting = function(bufnr)
+  vim.lsp.buf.format({
+    filter = function(client)
+      -- apply whatever logic you want (in this example, we'll only use null-ls)
+      return client.name == "null-ls"
+    end,
+    bufnr = bufnr,
+  })
+end
+
 
 -- [[ Setting options ]]
 -- See `:help vim.o`
@@ -378,17 +390,20 @@ vim.keymap.set('n', '<Leader>3', function() require('harpoon.ui').nav_file(3) en
 vim.keymap.set('n', '<Leader>4', function() require('harpoon.ui').nav_file(4) end,
   { silent = true, desc = 'Harpoon go to file 4' })
 
-vim.keymap.set("x", "<leader>p", [["_dp]], { desc = 'Paste without overwriting register' })
+vim.keymap.set("x", "<leader>p", [["_dP]], { desc = 'Paste without overwriting register' })
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = 'Yank selection to OS clipboard' })
 vim.keymap.set("n", "<leader>Y", [["+Y]], { desc = 'Yank to EOL to OS clipboard' })
 vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]], { desc = 'Delete to null register' })
 
-vim.keymap.set('n', '<Leader>f', vim.lsp.buf.format, { desc = 'Format current buffer' })
+vim.keymap.set('n', '<Leader>f', lsp_formatting, { desc = 'Format current buffer' })
 
 vim.keymap.set("v", "<A-j>", ":m '>+1<CR>gv=gv", { desc = 'Move selection down' })
 vim.keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { desc = 'Move selection up' })
 vim.keymap.set("n", "<A-j>", ":m .+1<CR>==", { desc = 'Move line down' })
 vim.keymap.set("n", "<A-k>", ":m .-2<CR>==", { desc = 'Move line up' })
+
+vim.keymap.set("v", ">", ">gv", { desc = 'Indent' })
+vim.keymap.set("v", "<", "<gv", { desc = 'Unindent' })
 
 vim.keymap.set("n", "J", "mzJ`z")
 vim.keymap.set("n", "n", "nzzzv")
@@ -656,7 +671,7 @@ require('typescript').setup({})
 
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
-local on_attach = function(_, bufnr)
+local on_attach = function(client, bufnr)
   -- NOTE: Remember that lua is a real programming language, and as such it is possible
   -- to define small helper and utility functions so you don't have to repeat yourself
   -- many times.
@@ -669,6 +684,16 @@ local on_attach = function(_, bufnr)
     end
 
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
+  end
+
+  -- if is vue project dont start tsserver
+  if vim.fn.filereadable('package.json') == 1 and client.name == 'tsserver' then
+    local package_json = vim.fn.json_decode(vim.fn.readfile('package.json'))
+    if package_json and package_json.dependencies and package_json.dependencies.vue then
+      vim.notify('Vue project detected, disabling tsserver')
+      client.stop()
+      return
+    end
   end
 
   nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
@@ -692,10 +717,11 @@ local on_attach = function(_, bufnr)
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
 
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
-    vim.lsp.buf.format()
-  end, { desc = 'Format current buffer with LSP' })
+  -- -- Create a command `:Format` local to the LSP buffer
+  -- vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
+  --   vim.notify('Formatting buffer')
+  --   vim.lsp.buf.format()
+  -- end, { desc = 'Format current buffer with LSP' })
 end
 
 -- Enable the following language servers
@@ -716,6 +742,12 @@ local servers = {
       telemetry = { enable = false },
     },
   },
+}
+
+local filetypes = {
+  volar = {
+    'vue', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact'
+  }
 }
 
 
@@ -739,6 +771,7 @@ mason_lspconfig.setup_handlers {
       capabilities = capabilities,
       on_attach = on_attach,
       settings = servers[server_name],
+      filetypes = filetypes[server_name],
     }
   end,
 }

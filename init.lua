@@ -33,6 +33,7 @@ are first encountering a few different constructs in your nvim config.
 I hope you enjoy your Neovim journey,
 - TJ
 
+
 P.S. You can delete this when you're done too. It's your config now :)
 --]]
 -- Set <space> as the leader key
@@ -57,6 +58,7 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+
 -- NOTE: Here is where you install your plugins.
 --  You can configure plugins using the `config` key.
 --
@@ -66,8 +68,8 @@ require('lazy').setup({
   -- NOTE: First, some plugins that don't require any configuration
 
   -- Git related plugins
-  'tpope/vim-fugitive',
-  'tpope/vim-rhubarb',
+  -- 'tpope/vim-fugitive',
+  -- 'tpope/vim-rhubarb',
 
   -- Detect tabstop and shiftwidth automatically
   'tpope/vim-sleuth',
@@ -160,6 +162,29 @@ require('lazy').setup({
         component_separators = '|',
         section_separators = '',
       },
+      sections = {
+        lualine_c = {
+          {
+            'filename',
+            file_status = true,     -- Displays file status (readonly status, modified status)
+            newfile_status = false, -- Display new file status (new file means no write after created)
+            path = 1,               -- 0: Just the filename
+            -- 1: Relative path
+            -- 2: Absolute path
+            -- 3: Absolute path, with tilde as the home directory
+            -- 4: Filename and parent dir, with tilde as the home directory
+
+            shorting_target = 40, -- Shortens path to leave 40 spaces in the window
+            -- for other components. (terrible name, any suggestions?)
+            symbols = {
+              modified = '[+]',      -- Text to show when the file is modified.
+              readonly = '[-]',      -- Text to show when the file is non-modifiable or readonly.
+              unnamed = '[No Name]', -- Text to show for unnamed buffers.
+              newfile = '[New]',     -- Text to show for newly created file before first write
+            }
+          }
+        }
+      }
     },
   },
 
@@ -218,15 +243,15 @@ require('lazy').setup({
   { 'xiyaowong/nvim-transparent' },
   -- { 'nvim-tree/nvim-tree.lua' },
   -- { 'nvim-tree/nvim-web-devicons' },
-  {
-    "nvim-neo-tree/neo-tree.nvim",
-    branch = "v3.x",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
-      "MunifTanjim/nui.nvim",
-    }
-  },
+  -- {
+  --   "nvim-neo-tree/neo-tree.nvim",
+  --   branch = "v3.x",
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --     "nvim-tree/nvim-web-devicons", -- not strictly required, but recommended
+  --     "MunifTanjim/nui.nvim",
+  --   }
+  -- },
   { 'ThePrimeagen/harpoon' },
   -- { 'jiangmiao/auto-pairs' },
   { 'echasnovski/mini.pairs' },
@@ -268,7 +293,8 @@ require('lazy').setup({
         sources = {
           null_ls.builtins.formatting.black,
           null_ls.builtins.formatting.prettier,
-          null_ls.builtins.code_actions.eslint
+          null_ls.builtins.code_actions.eslint,
+          null_ls.builtins.formatting.sqlfmt
         }
       })
     end,
@@ -287,14 +313,60 @@ require('lazy').setup({
       require("nvim-ts-autotag").setup()
     end
   },
-  { "github/copilot.vim" }
+  {
+    'stevearc/oil.nvim',
+    opts = {},
+    -- Optional dependencies
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+  },
+  -- { "https://github.com/tpope/vim-vinegar.git" },
+  -- {
+  --   "sourcegraph/sg.nvim",
+  --   dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope.nvim" },
+  -- },
+  -- { "github/copilot.vim" },
+  -- { "zbirenbaum/copilot.lua" },
+  {
+    "CopilotC-Nvim/CopilotChat.nvim",
+    branch = "canary",
+    dependencies = {
+      -- { "zbirenbaum/copilot.lua" }, -- or github/copilot.vim
+      { "github/copilot.vim" },    -- or github/copilot.vim
+      { "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
+    },
+    opts = {
+      debug = false, -- Enable debugging
+      -- See Configuration section for rest
+    },
+    -- See Commands section for default commands if you want to lazy load on them
+  },
+  {
+    "NeogitOrg/neogit",
+    dependencies = {
+      "nvim-lua/plenary.nvim",  -- required
+      "sindrets/diffview.nvim", -- optional - Diff integration
+
+      -- Only one of these is needed, not both.
+      "nvim-telescope/telescope.nvim", -- optional
+      "ibhagwan/fzf-lua",              -- optional
+    },
+    config = true
+  },
+  {
+    "nvim-neorg/neorg",
+    lazy = false,  -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
+    version = "*", -- Pin Neorg to the latest stable release
+    config = true,
+    dependencies = {
+      "vhyrro/luarocks.nvim",
+    }
+  }
 }, {})
 
 local lsp_formatting = function(bufnr)
   vim.lsp.buf.format({
     filter = function(client)
-      -- apply whatever logic you want (in this example, we'll only use null-ls)
-      return client.name == "null-ls"
+      return client.name ~= "tsserver" and client.name ~= 'volar' and client.name ~= 'bashls'
     end,
     bufnr = bufnr,
   })
@@ -344,7 +416,7 @@ vim.o.completeopt = 'menuone,noselect'
 vim.o.termguicolors = true
 
 -- My options
-vim.o.scrolloff = 10
+vim.o.scrolloff = 15
 vim.o.relativenumber = true
 
 vim.o.shiftwidth = 4
@@ -361,6 +433,11 @@ vim.o.colorcolumn = "100"
 
 vim.g.AutoPairsMultilineClose = 0
 
+-- Enable line numbers in netrw
+vim.g.netrw_bufsettings = 'noma nomod nu rnu nobl nowrap ro'
+
+-- Set the colorscheme
+
 -- [[ Basic Keymaps ]]
 
 -- Keymaps for better default experience
@@ -376,7 +453,8 @@ vim.keymap.set('n', '<C-d>', "<C-d>zz", { silent = true })
 vim.keymap.set('n', '<C-u>', "<C-u>zz", { silent = true })
 vim.keymap.set('n', '<Leader>ss', ":wa<CR>", { silent = true, desc = 'Save all buffers' })
 
-vim.keymap.set('n', '<Leader>ot', ":Neotree<CR>", { silent = true, desc = 'Toggle file tree' })
+-- vim.keymap.set('n', '<Leader>ot', ":Neotree<CR>", { silent = true, desc = 'Toggle file tree' })
+vim.keymap.set('n', '<Leader>oe', ":Ex<CR>", { silent = true, desc = 'Toggle file tree' })
 
 vim.keymap.set('n', '<Leader>ha', require('harpoon.mark').add_file, { silent = true, desc = 'Harpoon add file' })
 vim.keymap.set('n', '<Leader>hh', require('harpoon.ui').toggle_quick_menu,
@@ -432,6 +510,10 @@ vim.keymap.set('n', '<Leader>gww', function() require('telescope').extensions.gi
 vim.keymap.set('n', '<Leader>gwc', function() require('telescope').extensions.git_worktree.create_git_worktree() end,
   { silent = true, desc = 'Create git worktree' })
 
+vim.keymap.set('n', '<Leader>%', [[:edit %:h/]],
+  { silent = false, desc = 'Create new file in the dir of current buffer' })
+
+
 -- [[ Highlight on yank ]]
 -- See `:help vim.highlight.on_yank()`
 local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
@@ -442,6 +524,67 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   group = highlight_group,
   pattern = '*',
 })
+
+-- [[ Configure LSP ]]
+-- Sourcegraph configuration. All keys are optional
+-- require("sg").setup {
+-- Pass your own custom attach function
+--    If you do not pass your own attach function, then the following maps are provide:
+--        - gd -> goto definition
+--        - gr -> goto references
+-- on_attach = your_custom_lsp_attach_function
+-- }
+
+-- require('copilot').setup({
+--   panel = {
+--     enabled = true,
+--     auto_refresh = false,
+--     keymap = {
+--       jump_prev = "[[",
+--       jump_next = "]]",
+--       accept = "<CR>",
+--       refresh = "gr",
+--       open = "<M-CR>"
+--     },
+--     layout = {
+--       position = "bottom", -- | top | left | right
+--       ratio = 0.4
+--     },
+--   },
+--   suggestion = {
+--     enabled = true,
+--     auto_trigger = true,
+--     debounce = 75,
+--     keymap = {
+--       accept = "<M-l>",
+--       accept_word = false,
+--       accept_line = false,
+--       next = "<M-]>",
+--       prev = "<M-[>",
+--       dismiss = "<C-]>",
+--     },
+--   },
+--   filetypes = {
+--     yaml = true,
+--     markdown = true,
+--     help = false,
+--     gitcommit = false,
+--     gitrebase = false,
+--     hgcommit = false,
+--     svn = false,
+--     cvs = false,
+--     ["."] = false,
+--   },
+--   copilot_node_command = 'node', -- Node.js version must be > 18.x
+--   server_opts_overrides = {},
+-- })
+
+require("oil").setup({
+  view_options = {
+    show_hidden = true
+  }
+})
+vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
 require('mini.pairs').setup()
 require('mini.surround').setup({
@@ -558,15 +701,15 @@ vim.keymap.set('n', '<leader>s.g', function()
   })
 end, { desc = '[S]earch by [G]rep (incl. hidden)' })
 
-require("neo-tree").setup({
-  close_if_last_window = false, -- Close Neo-tree if it is the last window left in the tabs
-  filesystem = {
-    follow_current_file = {
-      enabled = true,          -- This will find and focus the file in the active buffer every time
-      leave_dirs_open = false, -- `false` closes auto expanded dirs, such as with `:Neotree reveal`
-    },
-  }
-})
+-- require("neo-tree").setup({
+--   close_if_last_window = false, -- Close Neo-tree if it is the last window left in the tabs
+--   filesystem = {
+--     follow_current_file = {
+--       enabled = true,          -- This will find and focus the file in the active buffer every time
+--       leave_dirs_open = false, -- `false` closes auto expanded dirs, such as with `:Neotree reveal`
+--     },
+--   }
+-- })
 
 -- [[ Configure Treesitter ]]
 -- See `:help nvim-treesitter`
@@ -669,6 +812,86 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 
 require('typescript').setup({})
 
+--- rename
+
+local lsp_priority = {
+  rename = {
+    -- python
+    "pyright",
+    "pylsp",
+    "jedi_language_server",
+  },
+}
+
+local lsp_have_feature = {
+  rename = function(client)
+    return client.supports_method "textDocument/rename"
+  end,
+  inlay_hint = function(client)
+    return client.supports_method "textDocument/inlayHint"
+  end,
+}
+
+local function lsp_buf_rename(client_name)
+  vim.lsp.buf.rename(nil, { name = client_name })
+end
+
+local function get_lsp_client_names(have_feature)
+  local client_names = {}
+  local attached_clients = vim.lsp.get_clients { bufnr = 0 }
+  for _, client in ipairs(attached_clients) do
+    if have_feature(client) then
+      table.insert(client_names, client.name)
+    end
+  end
+  return client_names
+end
+
+local function lsp_buf_rename_use_one(fallback)
+  local client_names = get_lsp_client_names(lsp_have_feature.rename)
+  if #client_names == 1 then
+    lsp_buf_rename(client_names[1])
+    return
+  end
+  if fallback then
+    fallback()
+  end
+end
+
+local function lsp_buf_rename_use_any(fallback)
+  local client_names = get_lsp_client_names(lsp_have_feature.rename)
+  for _, client_name in ipairs(client_names) do
+    lsp_buf_rename(client_name)
+    return
+  end
+  if fallback then
+    fallback()
+  end
+end
+
+local function lsp_buf_rename_use_priority(fallback)
+  local client_names = get_lsp_client_names(lsp_have_feature.rename)
+  for _, client_priority_name in ipairs(lsp_priority.rename) do
+    for _, client_name in ipairs(client_names) do
+      if client_priority_name == client_name then
+        lsp_buf_rename(client_priority_name)
+        return
+      end
+    end
+  end
+  if fallback then
+    fallback()
+  end
+end
+
+local function lsp_buf_rename_use_priority_or_any()
+  lsp_buf_rename_use_one(function()
+    lsp_buf_rename_use_priority(function()
+      lsp_buf_rename_use_any()
+    end)
+  end)
+end
+
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
 local on_attach = function(client, bufnr)
@@ -696,7 +919,7 @@ local on_attach = function(client, bufnr)
     end
   end
 
-  nmap('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+  nmap('<leader>rn', lsp_buf_rename_use_priority_or_any, '[R]e[n]ame')
   nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
 
   nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
@@ -731,10 +954,11 @@ end
 --  the `settings` field of the server config. You must look up that documentation yourself.
 local servers = {
   -- clangd = {},
-  -- gopls = {},
+  gopls = {},
   -- pyright = {},
   rust_analyzer = {},
   -- tsserver = {},
+  sqlls = {},
 
   lua_ls = {
     Lua = {
@@ -742,12 +966,40 @@ local servers = {
       telemetry = { enable = false },
     },
   },
+
+  yamlls = {
+    yaml = {
+      -- CloudFormation
+      customTags = {
+        "!FindInMap",
+        "!FindInMap sequence",
+        "!GetAtt",
+        "!GetAtt sequence",
+        "!Join",
+        "!Join sequence",
+        "!Ref",
+        "!Ref sequence",
+        "!Select",
+        "!Select sequence",
+        "!Split",
+        "!Split sequence",
+        "!Sub",
+        "!Sub sequence",
+      }
+    }
+  }
 }
 
 local filetypes = {
   volar = {
     'vue', 'javascript', 'javascriptreact', 'typescript', 'typescriptreact'
   }
+}
+
+local root_dirs = {
+  sqlls = function()
+    return vim.fn.fnamemodify(vim.fn.getcwd(), ':h')
+  end
 }
 
 
@@ -772,6 +1024,7 @@ mason_lspconfig.setup_handlers {
       on_attach = on_attach,
       settings = servers[server_name],
       filetypes = filetypes[server_name],
+      root_dir = root_dirs[server_name]
     }
   end,
 }
@@ -821,6 +1074,7 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
+    { name = 'cody' }
   },
 }
 

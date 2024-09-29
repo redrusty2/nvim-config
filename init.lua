@@ -352,15 +352,16 @@ require('lazy').setup({
     },
     config = true
   },
-  {
-    "nvim-neorg/neorg",
-    lazy = false,  -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
-    version = "*", -- Pin Neorg to the latest stable release
-    config = true,
-    dependencies = {
-      "vhyrro/luarocks.nvim",
-    }
-  }
+  -- {
+  --   "nvim-neorg/neorg",
+  --   lazy = false,  -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
+  --   version = "*", -- Pin Neorg to the latest stable release
+  --   config = true,
+  --   dependencies = {
+  --     "vhyrro/luarocks.nvim",
+  --   }
+  -- }
+  { "lervag/vimtex" },
 }, {})
 
 local lsp_formatting = function(bufnr)
@@ -371,6 +372,7 @@ local lsp_formatting = function(bufnr)
     bufnr = bufnr,
   })
 end
+
 
 
 -- [[ Setting options ]]
@@ -720,7 +722,7 @@ require('nvim-treesitter.configs').setup {
   -- Autoinstall languages that are not installed. Defaults to false (but you can change for yourself!)
   auto_install = false,
 
-  highlight = { enable = true },
+  highlight = { enable = true, disable = { 'latex' } },
   indent = { enable = true },
   incremental_selection = {
     enable = true,
@@ -809,6 +811,10 @@ vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous dia
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Go to next diagnostic message' })
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Open floating diagnostic message' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostics list' })
+
+-- LaTeX setup
+vim.g.vimtex_view_method = "zathura"
+
 
 require('typescript').setup({})
 
@@ -954,7 +960,7 @@ end
 --  the `settings` field of the server config. You must look up that documentation yourself.
 local servers = {
   -- clangd = {},
-  gopls = {},
+  -- gopls = {},
   -- pyright = {},
   rust_analyzer = {},
   -- tsserver = {},
@@ -987,7 +993,9 @@ local servers = {
         "!Sub sequence",
       }
     }
-  }
+  },
+
+  texlab = {}
 }
 
 local filetypes = {
@@ -1000,6 +1008,18 @@ local root_dirs = {
   sqlls = function()
     return vim.fn.fnamemodify(vim.fn.getcwd(), ':h')
   end
+}
+
+local init_options = {
+  volar = {
+    vue = {
+      hybridMode = false,
+    },
+    typescript = {
+      tsdk = vim.fn.getcwd() .. "/node_modules/typescript/lib",
+    },
+
+  }
 }
 
 
@@ -1024,7 +1044,8 @@ mason_lspconfig.setup_handlers {
       on_attach = on_attach,
       settings = servers[server_name],
       filetypes = filetypes[server_name],
-      root_dir = root_dirs[server_name]
+      root_dir = root_dirs[server_name],
+      init_options = init_options[server_name],
     }
   end,
 }
@@ -1074,7 +1095,7 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
-    { name = 'cody' }
+    { name = 'buffer' }
   },
 }
 

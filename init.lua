@@ -146,9 +146,6 @@ require('lazy').setup({
     -- Theme inspired by Atom
     'folke/tokyonight.nvim',
     priority = 1000,
-    config = function()
-      vim.cmd.colorscheme 'tokyonight-storm'
-    end,
   },
 
   {
@@ -286,7 +283,7 @@ require('lazy').setup({
   },
   { 'ThePrimeagen/git-worktree.nvim' },
   {
-    'jose-elias-alvarez/null-ls.nvim',
+    'nvimtools/none-ls.nvim',
     config = function()
       local null_ls = require("null-ls")
       null_ls.setup({
@@ -294,7 +291,9 @@ require('lazy').setup({
           null_ls.builtins.formatting.black,
           null_ls.builtins.formatting.prettier,
           null_ls.builtins.code_actions.eslint,
-          null_ls.builtins.formatting.sqlfmt
+          null_ls.builtins.formatting.sqlfmt,
+          -- null_ls.builtins.formatting.ruff
+
         }
       })
     end,
@@ -362,12 +361,42 @@ require('lazy').setup({
   --   }
   -- }
   { "lervag/vimtex" },
-}, {})
+  {
+    "weirongxu/plantuml-previewer.vim",
+    dependencies = {
+      "tyru/open-browser.vim",
+      "aklt/plantuml-syntax",
+    }
+  },
+  {
+    'kristijanhusak/vim-dadbod-ui',
+    dependencies = {
+      { 'tpope/vim-dadbod',                     lazy = true },
+      { 'kristijanhusak/vim-dadbod-completion', ft = { 'sql', 'mysql', 'plsql' }, lazy = true }, -- Optional
+    },
+    cmd = {
+      'DBUI',
+      'DBUIToggle',
+      'DBUIAddConnection',
+      'DBUIFindBuffer',
+    },
+    init = function()
+      -- Your DBUI configuration
+      vim.g.db_ui_use_nerd_fonts = 1
+    end,
+  },
+  {
+    "m4xshen/hardtime.nvim",
+    lazy = false,
+    dependencies = { "MunifTanjim/nui.nvim" },
+    opts = {},
+  },
+})
 
 local lsp_formatting = function(bufnr)
   vim.lsp.buf.format({
     filter = function(client)
-      return client.name ~= "tsserver" and client.name ~= 'volar' and client.name ~= 'bashls'
+      return client.name ~= "ts_ls" and client.name ~= 'volar' and client.name ~= 'bashls'
     end,
     bufnr = bufnr,
   })
@@ -438,8 +467,6 @@ vim.g.AutoPairsMultilineClose = 0
 -- Enable line numbers in netrw
 vim.g.netrw_bufsettings = 'noma nomod nu rnu nobl nowrap ro'
 
--- Set the colorscheme
-
 -- [[ Basic Keymaps ]]
 
 -- Keymaps for better default experience
@@ -451,8 +478,11 @@ vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = tr
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
 
 
-vim.keymap.set('n', '<C-d>', "<C-d>zz", { silent = true })
-vim.keymap.set('n', '<C-u>', "<C-u>zz", { silent = true })
+local scroll_amount = 25
+vim.keymap.set('n', '<C-d>', function() vim.cmd('normal! ' .. scroll_amount .. 'jzz') end, { silent = true })
+vim.keymap.set('n', '<C-u>', function() vim.cmd('normal! ' .. scroll_amount .. 'kzz') end, { silent = true })
+-- vim.keymap.set('n', '<C-d>', "<C-d>zz", { silent = true })
+-- vim.keymap.set('n', '<C-u>', "<C-u>zz", { silent = true })
 vim.keymap.set('n', '<Leader>ss', ":wa<CR>", { silent = true, desc = 'Save all buffers' })
 
 -- vim.keymap.set('n', '<Leader>ot', ":Neotree<CR>", { silent = true, desc = 'Toggle file tree' })
@@ -514,6 +544,12 @@ vim.keymap.set('n', '<Leader>gwc', function() require('telescope').extensions.gi
 
 vim.keymap.set('n', '<Leader>%', [[:edit %:h/]],
   { silent = false, desc = 'Create new file in the dir of current buffer' })
+
+vim.keymap.set('n', '<leader>>', ':vertical resize +10<CR>')
+vim.keymap.set('n', '<leader><', ':vertical resize -10<CR>')
+vim.keymap.set('n', '<leader>+', ':resize +10<CR>')
+vim.keymap.set('n', '<leader>-', ':resize -10<CR>')
+
 
 
 -- [[ Highlight on yank ]]
@@ -658,6 +694,31 @@ require('telescope').setup {
   --   },
   -- },
 }
+
+require('tokyonight').setup({
+  style = 'storm',
+  light_style = 'night',
+  transparent = false,
+  terminal_colors = true,
+  styles = {},
+  on_colors = function(colors) end,
+  on_highlights = function(hl, cls)
+    hl.CursorLineNr = {
+      bold = true,
+      fg = cls.bg_dark,
+      bg = cls.orange,
+    }
+    hl.LineNrAbove = {
+      fg = "#21A1B8",
+      bg = cls.bg_dark,
+    }
+    hl.LineNrBelow = {
+      fg = "#9379C1",
+      bg = cls.bg_dark,
+    }
+  end
+})
+vim.cmd.colorscheme 'tokyonight-storm'
 
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
@@ -915,11 +976,11 @@ local on_attach = function(client, bufnr)
     vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
   end
 
-  -- if is vue project dont start tsserver
-  if vim.fn.filereadable('package.json') == 1 and client.name == 'tsserver' then
+  -- if is vue project dont start ts_ls
+  if vim.fn.filereadable('package.json') == 1 and client.name == 'ts_ls' then
     local package_json = vim.fn.json_decode(vim.fn.readfile('package.json'))
     if package_json and package_json.dependencies and package_json.dependencies.vue then
-      vim.notify('Vue project detected, disabling tsserver')
+      vim.notify('Vue project detected, disabling ts_ls')
       client.stop()
       return
     end
@@ -1035,19 +1096,18 @@ local mason_lspconfig = require 'mason-lspconfig'
 
 mason_lspconfig.setup {
   ensure_installed = vim.tbl_keys(servers),
-}
-
-mason_lspconfig.setup_handlers {
-  function(server_name)
-    require('lspconfig')[server_name].setup {
-      capabilities = capabilities,
-      on_attach = on_attach,
-      settings = servers[server_name],
-      filetypes = filetypes[server_name],
-      root_dir = root_dirs[server_name],
-      init_options = init_options[server_name],
-    }
-  end,
+  handlers = {
+    function(server_name)
+      require('lspconfig')[server_name].setup {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        settings = servers[server_name] or {},
+        filetypes = filetypes[server_name] or {},
+        root_dir = root_dirs[server_name] or {},
+        init_options = init_options[server_name] or {},
+      }
+    end,
+  }
 }
 
 -- [[ Configure nvim-cmp ]]
@@ -1095,7 +1155,8 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
-    { name = 'buffer' }
+    { name = 'buffer' },
+    { name = 'Dadbod' }
   },
 }
 

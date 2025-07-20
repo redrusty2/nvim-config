@@ -288,9 +288,9 @@ require('lazy').setup({
       local null_ls = require("null-ls")
       null_ls.setup({
         sources = {
-          null_ls.builtins.formatting.black,
+          -- null_ls.builtins.formatting.black,
           null_ls.builtins.formatting.prettier,
-          null_ls.builtins.code_actions.eslint,
+          -- null_ls.builtins.code_actions.eslint,
           null_ls.builtins.formatting.sqlfmt,
           -- null_ls.builtins.formatting.ruff
 
@@ -467,6 +467,11 @@ vim.g.AutoPairsMultilineClose = 0
 -- Enable line numbers in netrw
 vim.g.netrw_bufsettings = 'noma nomod nu rnu nobl nowrap ro'
 
+
+vim.diagnostic.config({
+  virtual_text = true
+})
+
 -- [[ Basic Keymaps ]]
 
 -- Keymaps for better default experience
@@ -557,7 +562,7 @@ vim.keymap.set('n', '<leader>-', ':resize -10<CR>')
 local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
 vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function()
-    vim.highlight.on_yank()
+    vim.hl.on_yank()
   end,
   group = highlight_group,
   pattern = '*',
@@ -706,10 +711,10 @@ require('tokyonight').setup({
     hl.CursorLineNr = {
       bold = true,
       fg = cls.bg_dark,
-      bg = cls.orange,
+      bg = cls.magenta,
     }
     hl.LineNrAbove = {
-      fg = "#21A1B8",
+      fg = "#1C8FA3",
       bg = cls.bg_dark,
     }
     hl.LineNrBelow = {
@@ -961,7 +966,11 @@ end
 
 -- [[ Configure LSP ]]
 --  This function gets run when an LSP connects to a particular buffer.
-local on_attach = function(client, bufnr)
+local on_attach = function(event)
+  local client = { name = 'no-client-found' }
+  if event.data then
+    client = vim.lsp.get_client_by_id(event.data.client_id)
+  end
   -- NOTE: Remember that lua is a real programming language, and as such it is possible
   -- to define small helper and utility functions so you don't have to repeat yourself
   -- many times.
@@ -973,8 +982,12 @@ local on_attach = function(client, bufnr)
       desc = 'LSP: ' .. desc
     end
 
-    vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
+    vim.keymap.set('n', keys, func, { buffer = event.buf, desc = desc })
   end
+
+  -- if client.supports_method('textDocument/inlayHint') then
+  --   vim.lsp.inlay_hint.enable(bufnr, true)
+  -- end
 
   -- if is vue project dont start ts_ls
   if vim.fn.filereadable('package.json') == 1 and client.name == 'ts_ls' then
@@ -985,6 +998,25 @@ local on_attach = function(client, bufnr)
       return
     end
   end
+
+  -- if client.name == "terraformls" then
+  --   vim.api.nvim_create_autocmd("BufWritePost", {
+  --     buffer = event.buf,
+  --     callback = function()
+  --       client:execute_command({
+  --         command = "terraform.validate",
+  --         arguments = { vim.uri_from_bufnr(event.buf) },
+  --       })
+  --     end,
+  --   })
+  -- end
+
+  -- vim.notify(client.name)
+  -- if client.name == "terraformls" then
+  --   vim.notify('Terraform LSP attached to buffer: ' .. event.buf .. ' (' .. client.name .. ')')
+  --   nmap('<leader>tv', function() client:exec_cmd({ command = "terraform.validate", arguments = { event.buf } }) end,
+  --     '[T]erraform [V]alidate')
+  -- end
 
   nmap('<leader>rn', lsp_buf_rename_use_priority_or_any, '[R]e[n]ame')
   nmap('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
@@ -1014,6 +1046,13 @@ local on_attach = function(client, bufnr)
   -- end, { desc = 'Format current buffer with LSP' })
 end
 
+vim.api.nvim_create_autocmd('LspAttach', {
+  group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
+  callback = function(event)
+    vim.notify('LSP attached')
+    return on_attach(event)
+  end
+})
 -- Enable the following language servers
 --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
 --
@@ -1083,7 +1122,6 @@ local init_options = {
   }
 }
 
-
 -- Setup neovim lua configuration
 require('neodev').setup()
 
@@ -1091,23 +1129,34 @@ require('neodev').setup()
 local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
+vim.lsp.enable('terraformls')
+vim.lsp.config("terraformls", {
+  cmd = { "terraform-ls", "serve" },
+  filetypes = { "opentofu-vars", "terraform", "terraform-vars" },
+  root_markers = { ".terraform", ".git" },
+  on_attach = on_attach,
+  capabilities = capabilities,
+})
+
+
 -- Ensure the servers above are installed
 local mason_lspconfig = require 'mason-lspconfig'
 
 mason_lspconfig.setup {
   ensure_installed = vim.tbl_keys(servers),
-  handlers = {
-    function(server_name)
-      require('lspconfig')[server_name].setup {
-        capabilities = capabilities,
-        on_attach = on_attach,
-        settings = servers[server_name] or {},
-        filetypes = filetypes[server_name] or {},
-        root_dir = root_dirs[server_name] or {},
-        init_options = init_options[server_name] or {},
-      }
-    end,
-  }
+  -- handlers = {
+  --   function(server_name)
+  --     vim.notify("Setting up LSP server: " .. server_name)
+  --     vim.notify("Filetypes: " .. vim.inspect(filetypes[server_name] or {}))
+  --     require('lspconfig')[server_name].setup {
+  --       capabilities = capabilities,
+  --       settings = servers[server_name] or {},
+  --       filetypes = filetypes[server_name] or {},
+  --       root_dir = root_dirs[server_name] or {},
+  --       init_options = init_options[server_name] or {},
+  --     }
+  --   end,
+  -- }
 }
 
 -- [[ Configure nvim-cmp ]]
@@ -1159,6 +1208,36 @@ cmp.setup {
     { name = 'Dadbod' }
   },
 }
+
+vim.api.nvim_create_user_command("LspCapabilities", function()
+  local buf = vim.api.nvim_get_current_buf()
+  local clients = vim.lsp.get_clients({ bufnr = buf })
+  if vim.tbl_isempty(clients) then
+    vim.notify("No active LSP clients", vim.log.levels.WARN)
+    return
+  end
+
+  local lines = {}
+  for _, client in ipairs(clients) do
+    table.insert(lines, "# " .. client.name)
+    for cap, enabled in pairs(client.server_capabilities or {}) do
+      if enabled and cap:match("Provider$") then
+        table.insert(lines, "- " .. cap:gsub("Provider$", ""))
+      end
+    end
+    table.insert(lines, "") -- blank line between clients
+  end
+
+  local float_buf, _ = vim.lsp.util.open_floating_preview(lines, "markdown", {
+    border    = "single",
+    max_width = 60,
+  })
+  vim.api.nvim_buf_set_option(float_buf, "bufhidden", "wipe")
+
+  -- also yank raw capabilities of *all* clients to the + register
+  vim.fn.setreg("+", vim.inspect(clients))
+end, {})
+
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

@@ -385,12 +385,12 @@ require('lazy').setup({
       vim.g.db_ui_use_nerd_fonts = 1
     end,
   },
-  {
-    "m4xshen/hardtime.nvim",
-    lazy = false,
-    dependencies = { "MunifTanjim/nui.nvim" },
-    opts = {},
-  },
+  -- {
+  --   "m4xshen/hardtime.nvim",
+  --   lazy = false,
+  --   dependencies = { "MunifTanjim/nui.nvim" },
+  --   opts = {},
+  -- },
 })
 
 local lsp_formatting = function(bufnr)
